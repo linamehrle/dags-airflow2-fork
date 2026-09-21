@@ -9,7 +9,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.operators.bash import BashOperator
 
-from common_variables import COMMON_ENV_VARS
+from common_variables import COMMON_ENV_VARS, daily_schedule
 
 default_args = {
     "owner": "renato.farruggio",
@@ -27,7 +27,7 @@ with DAG(
     "dcc_dataspot_catalog_quality_daily",
     default_args=default_args,
     description="Run dataspot catalog quality daily checks",
-    schedule="0 4 * * *",
+    schedule=daily_schedule("dcc_dataspot_catalog_quality_daily"),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

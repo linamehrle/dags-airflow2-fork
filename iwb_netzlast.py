@@ -14,12 +14,12 @@ from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.operators.bash import BashOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 # DAG configuration
 DAG_ID = "iwb_netzlast"
 EXECUTION_TIMEOUT = timedelta(minutes=50)
-SCHEDULE = "0 * * * *"
+SCHEDULE = hourly_schedule(DAG_ID)
 
 default_args = {
     "owner": "orhan.saeedi",

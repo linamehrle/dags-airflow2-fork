@@ -11,7 +11,7 @@ from airflow import DAG
 from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 
-from common_variables import COMMON_ENV_VARS
+from common_variables import COMMON_ENV_VARS, hourly_schedule
 
 default_args = {
     "owner": "jonas.bieri",
@@ -28,7 +28,7 @@ with DAG(
     "smarte_strasse_ladestation",
     description="Run the smarte_strasse_ladestation docker container",
     default_args=default_args,
-    schedule="*/15 * * * *",
+    schedule=hourly_schedule("smarte_strasse_ladestation", step_minutes=15),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

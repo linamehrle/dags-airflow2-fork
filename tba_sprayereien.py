@@ -12,7 +12,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 default_args = {
     "owner": "rstam.aloush",
@@ -29,7 +29,7 @@ default_args = {
 with DAG(
     "tba_sprayereien",
     default_args=default_args,
-    schedule="0 * * * *",
+    schedule=hourly_schedule("tba_sprayereien"),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

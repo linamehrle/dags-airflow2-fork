@@ -238,6 +238,55 @@ These are typically used via:
 from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
 ```
 
+## Scheduling & avoiding load spikes
+
+Many DAGs used to hardcode "obvious" round-number cron schedules (`"0 * * * *"`, `"*/15 * * * *"`, `"0 4 * * *"`), which meant dozens of unrelated DAGs all fired at the exact same minute and caused load spikes (e.g. every full hour). `common_variables.py` provides two helpers that spread schedules out automatically instead:
+
+```python
+from common_variables import hourly_schedule, daily_schedule
+
+# instead of SCHEDULE = "0 * * * *"          -> once/hour, deterministic minute offset
+SCHEDULE = hourly_schedule(DAG_ID)
+
+# instead of SCHEDULE = "*/15 * * * *"       -> every 15 min, deterministic minute offset
+SCHEDULE = hourly_schedule(DAG_ID, step_minutes=15)
+
+# instead of schedule="0 4 * * *"            -> once/day, deterministic time within a window
+schedule = daily_schedule(DAG_ID)  # defaults to a 01:00-06:00 window
+```
+
+Both derive a stable offset from a hash of `dag_id`, so:
+- the same DAG always gets the same schedule across deploys/restarts (no flapping),
+- different DAGs land on different minutes/times without anyone having to hand-pick a free slot,
+- new DAGs get this "for free" just by using the helper instead of writing a literal cron string.
+
+**Limitation (known, accepted for now):** this only spreads out *trigger* times. It has no idea how long each DAG actually takes to run, so a 2-minute DAG and a 40-minute DAG could still be started close together and overlap for most of the long one's runtime. It's a naive fix for the "everyone fires at the same instant" problem, not a full load-balancing solution.
+
+### Future improvement: runtime-aware scheduling
+
+A better version would take actual DAG runtime into account and place jobs to minimize concurrent overlap, not just spread out start times evenly. This wasn't implemented because it requires access to the Airflow metadata DB / REST API to pull historical run durations, which wasn't available at the time.
+
+To pick this up later:
+
+1. **Get average runtimes per DAG.** Airflow already tracks this — no instrumentation needed. Either:
+   - Query the metadata DB directly (`task_instance.duration` is already computed in seconds by Airflow):
+     ```sql
+     SELECT dag_id, task_id, AVG(duration) AS avg_duration_sec, COUNT(*) AS n_runs
+     FROM task_instance
+     WHERE state = 'success' AND start_date > now() - interval '30 days'
+     GROUP BY dag_id, task_id
+     ORDER BY avg_duration_sec DESC;
+     ```
+   - Or use the stable REST API: `GET /api/v1/dags/~/dagRuns/~/taskInstances` (list across all DAGs with `~`), which returns `start_date`, `end_date`, and `duration` per task instance.
+
+2. **Turn it into a schedule with a greedy load-balancing placement** (the classic "Longest Processing Time first" heuristic for multiprocessor scheduling — simple and works well in practice, no real bin-packing solver needed):
+   - Group DAGs by cadence (all the `*/15` ones, all the daily ones, etc.) since that's the natural collision domain.
+   - Sort each group by average runtime, longest first.
+   - Walk a timeline of small buckets (e.g. one per minute) and place each DAG's start time at the bucket where the *current cumulative load* (sum of durations of jobs already scheduled to be running at that minute) is lowest.
+   - Long jobs get placed first (most room to spread out); short jobs fill in the remaining gaps.
+
+3. **Run this as an offline maintenance script, not at DAG-parse time.** Airflow re-parses every DAG file on a short interval (`min_file_process_interval`), so if `SCHEDULE = ...` triggered a DB/API query on every parse it would add constant load to the metadata DB, and new DAGs with no run history yet would have nothing to compute from. Instead: run the script periodically (manually, or as its own low-frequency maintenance DAG, e.g. monthly), have it write a static `dag_id -> cron string` mapping into a module (e.g. `schedules.py` next to `common_variables.py`), and have each DAG file import its own entry from that mapping. Re-run as runtimes drift over time (growing data volumes, slower upstream APIs, etc.).
+
 ## DAG Configuration Fields
 
 ### DAG Object

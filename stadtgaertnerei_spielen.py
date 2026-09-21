@@ -13,7 +13,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 default_args = {
     "owner": "orhan.saeedi",
@@ -30,7 +30,7 @@ with DAG(
     "stadtgaertnerei_spielen",
     description="Run the stadtgaertnerei_spielen docker container",
     default_args=default_args,
-    schedule="0 * * * *",
+    schedule=hourly_schedule("stadtgaertnerei_spielen"),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

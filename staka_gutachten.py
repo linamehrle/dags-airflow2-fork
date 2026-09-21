@@ -13,13 +13,13 @@ from helpers.failure_tracking_operator import FailureTrackingDockerOperator
 from airflow.operators.bash import BashOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 # DAG configuration
 DAG_ID = "staka_gutachten"
 FAILURE_THRESHOLD = 1
 EXECUTION_TIMEOUT = timedelta(minutes=3)
-SCHEDULE = "0 * * * *"
+SCHEDULE = hourly_schedule(DAG_ID)
 
 default_args = {
     "owner": "orhan.saeedi",

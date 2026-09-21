@@ -14,13 +14,13 @@ from airflow.operators.bash import BashOperator
 from helpers.failure_tracking_operator import FailureTrackingDockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 # DAG configuration
 DAG_ID = "bafu_hydrodaten_vorhersagen"
 FAILURE_THRESHOLD = 5
 EXECUTION_TIMEOUT = timedelta(minutes=2)
-SCHEDULE = "0 * * * *"
+SCHEDULE = hourly_schedule(DAG_ID)
 
 default_args = {
     "owner": "jonas.bieri",

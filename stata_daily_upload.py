@@ -9,14 +9,14 @@ from airflow import DAG
 from airflow.models import Variable
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 from helpers.failure_tracking_operator import FailureTrackingDockerOperator
 
 # DAG configuration
 DAG_ID = "stata_daily_upload"
 FAILURE_THRESHOLD = 16
 EXECUTION_TIMEOUT = timedelta(minutes=2)
-SCHEDULE = "*/15 * * * *"
+SCHEDULE = hourly_schedule(DAG_ID, step_minutes=15)
 
 default_args = {
     "owner": "jonas.bieri",

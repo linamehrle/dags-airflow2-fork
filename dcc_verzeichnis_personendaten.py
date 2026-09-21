@@ -12,7 +12,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, daily_schedule
 
 DAG_ID = "dcc_verzeichnis_personendaten"
 
@@ -31,7 +31,7 @@ with DAG(
     DAG_ID,
     default_args=default_args,
     description=f"Run the {DAG_ID} docker container",
-    schedule="0 4 * * *",
+    schedule=daily_schedule(DAG_ID),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

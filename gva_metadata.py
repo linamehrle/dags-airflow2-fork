@@ -12,14 +12,14 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 from helpers.failure_tracking_operator import FailureTrackingDockerOperator
 
 # DAG configuration
 DAG_ID = "gva_metadata"
 FAILURE_THRESHOLD = 4
 EXECUTION_TIMEOUT = timedelta(minutes=5)
-SCHEDULE = "0 * * * *"
+SCHEDULE = hourly_schedule(DAG_ID)
 
 default_args = {
     "owner": "rstam.aloush",
