@@ -110,13 +110,13 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.models import Variable
 from docker.types import Mount
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 # DAG configuration
 DAG_ID = "my_dag"
 FAILURE_THRESHOLD = 1  # Skip first failure, fail on second
 EXECUTION_TIMEOUT = timedelta(minutes=3)
-SCHEDULE = "*/5 * * * *"
+SCHEDULE = hourly_schedule(DAG_ID, step_minutes=5)  # runs every 5 min, offset spread out automatically - see "Scheduling & avoiding load spikes" below
 
 default_args = {
     "owner": "your.name",
@@ -431,7 +431,7 @@ from airflow import DAG
 from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, daily_schedule
 
 DAG_ID = "my_dag"  # Must match folder name in data-processing repository
 
@@ -450,7 +450,7 @@ with DAG(
     dag_id=DAG_ID,
     default_args=default_args,
     description=f"Run the {DAG_ID} docker container",
-    schedule="0 6 * * *",  # Daily at 6 AM
+    schedule=daily_schedule(DAG_ID),  # daily, offset spread out automatically - see "Scheduling & avoiding load spikes" below
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__  # Makes the docstring visible in Airflow UI
@@ -495,7 +495,9 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
-from common_variables import COMMON_ENV_VARS
+from common_variables import COMMON_ENV_VARS, daily_schedule
+
+DAG_ID = "dcc_dataspot_sync_example"
 
 default_args = {
     "owner": "your.name",
@@ -509,10 +511,10 @@ default_args = {
 }
 
 with DAG(
-    "dcc_dataspot_sync_example",
+    DAG_ID,
     default_args=default_args,
     description="Sync data catalog metadata",
-    schedule="0 3 * * *",
+    schedule=daily_schedule(DAG_ID),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__
