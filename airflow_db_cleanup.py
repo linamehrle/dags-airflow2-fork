@@ -10,6 +10,8 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
+from common_variables import daily_schedule
+
 PATH_TO_CODE = Variable.get("PATH_TO_CODE")
 
 # Define default arguments for the DAG
@@ -30,7 +32,7 @@ with DAG(
     "airflow_db_cleanup",
     default_args=default_args,
     description="DockerOperator to clean up old Airflow task runs and logs",
-    schedule="0 0 * * *",
+    schedule=daily_schedule("airflow_db_cleanup", start_hour=0, end_hour=1),
     catchup=False,
 ) as dag:
     # DockerOperator to run the db cleanup command

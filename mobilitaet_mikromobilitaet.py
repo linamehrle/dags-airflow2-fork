@@ -15,7 +15,7 @@ from airflow.operators.bash import BashOperator
 from helpers.failure_tracking_operator import FailureTrackingDockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 PATH_TO_LOCAL_CERTS = Variable.get("PATH_TO_LOCAL_CERTS")
 CA_ZID_FILENAME = Variable.get("CA_ZID_FILENAME")
@@ -25,7 +25,7 @@ CA_PKI_FILENAME = Variable.get("CA_PKI_FILENAME")
 DAG_ID = "mobilitaet_mikromobilitaet"
 FAILURE_THRESHOLD = 3
 EXECUTION_TIMEOUT = timedelta(minutes=5)
-SCHEDULE = "*/10 * * * *"
+SCHEDULE = hourly_schedule(DAG_ID, step_minutes=10)
 
 
 def check_manual_triggering(**context):

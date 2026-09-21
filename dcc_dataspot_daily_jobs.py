@@ -9,7 +9,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.operators.bash import BashOperator
 
-from common_variables import COMMON_ENV_VARS
+from common_variables import COMMON_ENV_VARS, daily_schedule
 
 default_args = {
     "owner": "renato.farruggio",
@@ -27,7 +27,7 @@ with DAG(
     "dcc_dataspot_daily_jobs",
     default_args=default_args,
     description="Run dataspot sync operations in sequence",
-    schedule="0 3 * * *",
+    schedule=daily_schedule("dcc_dataspot_daily_jobs", start_hour=3, end_hour=4),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

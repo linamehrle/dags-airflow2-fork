@@ -12,7 +12,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, daily_schedule
 
 default_args = {
     "owner": "renato.farruggio",
@@ -29,7 +29,7 @@ with DAG(
     "ed_schulferien",
     default_args=default_args,
     description="Run the ed_schulferien docker container",
-    schedule="0 3 * * *",
+    schedule=daily_schedule("ed_schulferien", start_hour=3, end_hour=4),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

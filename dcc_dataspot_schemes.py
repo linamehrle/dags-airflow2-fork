@@ -9,7 +9,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, every_n_hours_schedule
 
 default_args = {
     "owner": "rstam.aloush",
@@ -27,7 +27,7 @@ with DAG(
     "dcc_dataspot_schemes",
     default_args=default_args,
     description="Run the dcc_dataspot_schemes docker container",
-    schedule="0 */2 * * *",
+    schedule=every_n_hours_schedule("dcc_dataspot_schemes", step_hours=2),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

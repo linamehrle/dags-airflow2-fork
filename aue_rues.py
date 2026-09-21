@@ -14,7 +14,7 @@ from airflow.operators.bash import BashOperator
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 default_args = {
     "owner": "jonas.bieri",
@@ -31,7 +31,7 @@ with DAG(
     "aue_rues",
     description="Run the aue_rues docker container",
     default_args=default_args,
-    schedule="*/10 * * * *",
+    schedule=hourly_schedule("aue_rues", step_minutes=10),
     catchup=False,
     dagrun_timeout=timedelta(minutes=8),
 ) as dag:

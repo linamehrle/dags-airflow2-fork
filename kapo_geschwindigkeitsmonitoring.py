@@ -15,7 +15,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, daily_schedule
 
 default_args = {
     "owner": "jonas.bieri",
@@ -32,7 +32,7 @@ with DAG(
     "kapo_geschwindigkeitsmonitoring",
     description="Run the kapo_geschwindigkeitsmonitoring docker container",
     default_args=default_args,
-    schedule="0 2 * * *",
+    schedule=daily_schedule("kapo_geschwindigkeitsmonitoring", start_hour=2, end_hour=3),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

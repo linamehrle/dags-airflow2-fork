@@ -9,7 +9,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import PATH_TO_CODE, PATH_TO_DATASETTE_FILES
+from common_variables import PATH_TO_CODE, PATH_TO_DATASETTE_FILES, daily_schedule
 
 default_args = {
     "owner": "orhan.saeedi",
@@ -25,7 +25,7 @@ with DAG(
     "datasette_rsync",
     description="Run the datasette_rsync docker container",
     default_args=default_args,
-    schedule="0 0 * * *",
+    schedule=daily_schedule("datasette_rsync", start_hour=0, end_hour=1),
     catchup=False,
 ) as dag:
     rsync = DockerOperator(

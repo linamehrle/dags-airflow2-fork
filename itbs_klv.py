@@ -13,7 +13,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, every_n_hours_schedule
 
 default_args = {
     "owner": "orhan.saeedi",
@@ -30,7 +30,7 @@ with DAG(
     "itbs_klv",
     default_args=default_args,
     description="Run the itbs_klv docker container",
-    schedule="0 */2 * * *",
+    schedule=every_n_hours_schedule("itbs_klv", step_hours=2),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

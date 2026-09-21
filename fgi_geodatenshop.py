@@ -14,7 +14,7 @@ from airflow.providers.docker.operators.docker import DockerOperator
 from helpers.failure_tracking_operator import FailureTrackingDockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, every_n_hours_schedule
 
 PATH_TO_LOCAL_CERTS = Variable.get("PATH_TO_LOCAL_CERTS")
 CA_ZID_FILENAME = Variable.get("CA_ZID_FILENAME")
@@ -24,7 +24,7 @@ CA_PKI_FILENAME = Variable.get("CA_PKI_FILENAME")
 DAG_ID = "fgi_geodatenshop"
 FAILURE_THRESHOLD = 1  # Skip first failure, fail on second
 EXECUTION_TIMEOUT = timedelta(minutes=90)
-SCHEDULE = "0 */2 * * *"
+SCHEDULE = every_n_hours_schedule(DAG_ID, step_hours=2)
 
 default_args = {
     "owner": "rstam.aloush",

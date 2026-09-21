@@ -12,7 +12,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 default_args = {
     "owner": "orhan.saeedi",
@@ -29,7 +29,7 @@ with DAG(
     "esc_faq",
     default_args=default_args,
     description="Run the esc_faq docker container",
-    schedule="*/5 * * * *",
+    schedule=hourly_schedule("esc_faq", step_minutes=5),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

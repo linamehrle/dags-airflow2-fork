@@ -13,7 +13,7 @@ from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.operators.bash import BashOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, daily_schedule
 
 default_args = {
     "owner": "orhan.saeedi",
@@ -31,7 +31,7 @@ with DAG(
     "zefix_handelsregister",
     description="Run the zefix-handelsregister docker container",
     default_args=default_args,
-    schedule="0 0 * * *",
+    schedule=daily_schedule("zefix_handelsregister", start_hour=0, end_hour=1),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

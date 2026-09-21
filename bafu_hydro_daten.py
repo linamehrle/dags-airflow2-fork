@@ -13,7 +13,7 @@ from airflow.operators.bash import BashOperator
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 default_args = {
     "owner": "jonas.bieri",
@@ -30,7 +30,7 @@ with DAG(
     "bafu_hydro_daten",
     description="Run the bafu_hydrodaten docker container",
     default_args=default_args,
-    schedule="*/5 * * * *",
+    schedule=hourly_schedule("bafu_hydro_daten", step_minutes=5),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

@@ -15,7 +15,7 @@ from airflow.models import Variable
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS
+from common_variables import COMMON_ENV_VARS, daily_schedule
 
 default_args = {
     "owner": "orhan.saeedi",
@@ -32,7 +32,7 @@ with DAG(
     "stata_hunde",
     description="Run the stata_hunde docker container",
     default_args=default_args,
-    schedule="49 14 * * *",
+    schedule=daily_schedule("stata_hunde", start_hour=14, end_hour=15),
     catchup=False,
 ) as dag:
     dag.doc_md = __doc__

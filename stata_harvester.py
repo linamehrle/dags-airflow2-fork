@@ -6,7 +6,7 @@ from airflow.operators.python import ShortCircuitOperator
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 
-from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
+from common_variables import COMMON_ENV_VARS, PATH_TO_CODE, hourly_schedule
 
 
 def should_continue(**kwargs):
@@ -32,7 +32,7 @@ with DAG(
     description="Run the stata_harvester docker container",
     default_args=default_args,
     catchup=False,
-    schedule="*/5 * * * *",
+    schedule=hourly_schedule("stata_harvester", step_minutes=5),
 ) as dag:
     check_file_changed = DockerOperator(
         task_id="check_file_changed",
