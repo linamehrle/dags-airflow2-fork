@@ -50,13 +50,43 @@ def hourly_schedule(dag_id: str, step_minutes: int = 60) -> str:
     return f"{offset}/{step_minutes} * * * *"
 
 
-def daily_schedule(dag_id: str, start_hour: int = 1, end_hour: int = 6) -> str:
-    """Cron expression for a daily DAG, landing at a minute-of-day derived
+def every_n_hours_schedule(dag_id: str, step_hours: int, start_hour: int = 0) -> str:
+    """Cron expression that runs every `step_hours` hours, at an hour offset
+    (within [start_hour, start_hour + step_hours)) and minute offset both derived
+    deterministically from `dag_id`.
+
+    Use this instead of hardcoding e.g. "0 */2 * * *" or "0 */12 * * *" directly:
+    many DAGs doing that independently all land on the same round hour and fire at
+    once. This spreads them out automatically, the same way `hourly_schedule` does
+    for sub-hour cadences.
+
+    `step_hours` must evenly divide 24 (1, 2, 3, 4, 6, 8, 12, 24) for the hours to
+    tile cleanly across the day.
+
+    NOTE: like the other helpers here, this only spaces out trigger times, not run
+    time overlap. See README.md "Scheduling & avoiding load spikes" for a
+    runtime-aware approach if collisions are still a problem.
+    """
+    minute = _stable_offset(dag_id, 60)
+    hour_offset = start_hour + _stable_offset(dag_id + ":hour", step_hours)
+    return f"{minute} {hour_offset}/{step_hours} * * *"
+
+
+def daily_schedule(
+    dag_id: str,
+    start_hour: int = 1,
+    end_hour: int = 6,
+    day_of_month: str = "*",
+    day_of_week: str = "*",
+) -> str:
+    """Cron expression for a DAG that runs once per day (the default), once per
+    week (pass e.g. `day_of_week="1"` for Monday), or once per month (pass e.g.
+    `day_of_month="1"` for the 1st) - landing at a minute-of-day derived
     deterministically from `dag_id` within [start_hour, end_hour).
 
-    Use this instead of hardcoding e.g. "0 4 * * *" directly: many daily DAGs doing
-    that independently all land on the same round hour and fire at once. This spreads
-    them across a configurable low-traffic window automatically.
+    Use this instead of hardcoding e.g. "0 4 * * *" or "0 3 * * 1" directly: many
+    DAGs doing that independently all land on the same round hour and fire at once.
+    This spreads them across a configurable low-traffic window automatically.
 
     NOTE: like `hourly_schedule`, this only spaces out trigger times, not run time
     overlap. See README.md "Scheduling & avoiding load spikes" for a runtime-aware
@@ -65,4 +95,4 @@ def daily_schedule(dag_id: str, start_hour: int = 1, end_hour: int = 6) -> str:
     window_minutes = (end_hour - start_hour) * 60
     offset = _stable_offset(dag_id, window_minutes)
     minute_of_day = start_hour * 60 + offset
-    return f"{minute_of_day % 60} {minute_of_day // 60} * * *"
+    return f"{minute_of_day % 60} {minute_of_day // 60} {day_of_month} * {day_of_week}"

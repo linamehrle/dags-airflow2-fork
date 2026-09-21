@@ -240,27 +240,40 @@ from common_variables import COMMON_ENV_VARS, PATH_TO_CODE
 
 ## Scheduling & avoiding load spikes
 
-Many DAGs used to hardcode "obvious" round-number cron schedules (`"0 * * * *"`, `"*/15 * * * *"`, `"0 4 * * *"`), which meant dozens of unrelated DAGs all fired at the exact same minute and caused load spikes (e.g. every full hour). `common_variables.py` provides two helpers that spread schedules out automatically instead:
+Many DAGs used to hardcode "obvious" round-number cron schedules (`"0 * * * *"`, `"*/15 * * * *"`, `"0 4 * * *"`), which meant dozens of unrelated DAGs all fired at the exact same minute and caused load spikes (e.g. every full hour). `common_variables.py` provides helpers that spread schedules out automatically instead:
 
 ```python
-from common_variables import hourly_schedule, daily_schedule
+from common_variables import hourly_schedule, every_n_hours_schedule, daily_schedule
 
 # instead of SCHEDULE = "0 * * * *"          -> once/hour, deterministic minute offset
 SCHEDULE = hourly_schedule(DAG_ID)
 
 # instead of SCHEDULE = "*/15 * * * *"       -> every 15 min, deterministic minute offset
+# (step_minutes can be any divisor of 60: 1, 2, 3, 5, 6, 10, 12, 15, 20, 30)
 SCHEDULE = hourly_schedule(DAG_ID, step_minutes=15)
+
+# instead of SCHEDULE = "0 */2 * * *"        -> every N hours, deterministic hour+minute offset
+# (step_hours can be any divisor of 24: 1, 2, 3, 4, 6, 8, 12)
+SCHEDULE = every_n_hours_schedule(DAG_ID, step_hours=2)
 
 # instead of schedule="0 4 * * *"            -> once/day, deterministic time within a window
 schedule = daily_schedule(DAG_ID)  # defaults to a 01:00-06:00 window
+
+# instead of schedule="0 3 * * 1"            -> once/week (Monday), deterministic time within a window
+schedule = daily_schedule(DAG_ID, day_of_week="1")
+
+# instead of schedule="0 5 1 * *"            -> once/month (1st), deterministic time within a window
+schedule = daily_schedule(DAG_ID, day_of_month="1")
 ```
 
-Both derive a stable offset from a hash of `dag_id`, so:
+All of them derive a stable offset from a hash of `dag_id`, so:
 - the same DAG always gets the same schedule across deploys/restarts (no flapping),
 - different DAGs land on different minutes/times without anyone having to hand-pick a free slot,
 - new DAGs get this "for free" just by using the helper instead of writing a literal cron string.
 
-**Limitation (known, accepted for now):** this only spreads out *trigger* times. It has no idea how long each DAG actually takes to run, so a 2-minute DAG and a 40-minute DAG could still be started close together and overlap for most of the long one's runtime. It's a naive fix for the "everyone fires at the same instant" problem, not a full load-balancing solution.
+**Limitations (known, accepted for now):**
+- These helpers only spread out *trigger* times. They have no idea how long each DAG actually takes to run, so a 2-minute DAG and a 40-minute DAG could still be started close together and overlap for most of the long one's runtime. It's a naive fix for the "everyone fires at the same instant" problem, not a full load-balancing solution.
+- A DAG that must run at a genuinely fixed wall-clock time (e.g. business-hours-only, or a fixed multiple-times-a-day schedule like `"0 7,14 * * *"`) isn't a good fit for staggering - just hardcode the cron string in that case and let a [Pool](https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/pools.html) absorb any resulting load spike instead.
 
 ### Future improvement: runtime-aware scheduling
 
